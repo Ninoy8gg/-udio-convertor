@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101522">
+  <title>Converte — Áudio e vídeo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #141c30;
+      --panel-2: #1a2540;
+      --line: rgba(179, 198, 255, .14);
+      --text: #f3f6ff;
+      --muted: #aab5ce;
+      --accent: #8b7cff;
+      --accent-2: #58d6c7;
+      --danger: #ff8b9a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 28px 16px 40px;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(91, 91, 220, .24), transparent 38%),
+        radial-gradient(ellipse at 100% 20%, rgba(45, 190, 174, .13), transparent 32%),
+        var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .wrap { width: min(720px, 100%); margin: 0 auto; }
+    header { text-align: center; margin: 14px 0 28px; }
+    .brand {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px;
+      color: #d2d8ff; background: rgba(255,255,255,.035); font-size: 12px;
+      letter-spacing: .12em; text-transform: uppercase;
+    }
+    .brand-mark { color: var(--accent-2); font-size: 16px; }
+    h1 { margin: 16px 0 8px; font-size: clamp(30px, 7vw, 43px); letter-spacing: -.04em; }
+    .subtitle { margin: 0 auto; max-width: 470px; color: var(--muted); line-height: 1.55; font-size: 14px; }
+    .section-label { margin: 0 0 12px; color: #c3cde2; font-size: 13px; font-weight: 700; }
+    .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .choice {
+      min-width: 0; padding: 18px 12px; border: 1px solid var(--line); border-radius: 17px;
+      color: var(--text); background: linear-gradient(150deg, rgba(255,255,255,.065), rgba(255,255,255,.025));
+      cursor: pointer; text-align: left; transition: .18s ease;
+    }
+    .choice:hover { transform: translateY(-2px); border-color: rgba(139,124,255,.65); }
+    .choice[aria-pressed="true"] { border-color: var(--accent); background: linear-gradient(145deg, rgba(139,124,255,.22), rgba(88,214,199,.07)); box-shadow: 0 0 0 1px rgba(139,124,255,.22) inset; }
+    .formats { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .format { font-weight: 800; font-size: clamp(14px, 3.2vw, 18px); letter-spacing: -.03em; }
+    .arrow { color: var(--accent-2); font-size: 18px; }
+    .choice small { display: block; margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .panel {
+      margin-top: 18px; padding: 20px; border: 1px solid var(--line); border-radius: 20px;
+      background: rgba(20, 28, 48, .88); box-shadow: 0 18px 50px rgba(0,0,0,.2);
+    }
+    .panel h2 { margin: 0 0 5px; font-size: 18px; }
+    .panel-intro { margin: 0 0 17px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .dropzone {
+      padding: 24px 16px; border: 1px dashed rgba(174,190,231,.35); border-radius: 15px;
+      text-align: center; background: rgba(255,255,255,.025);
+    }
+    .file-icon { display: block; margin-bottom: 7px; font-size: 28px; }
+    .file-name { overflow-wrap: anywhere; margin: 0 0 5px; font-weight: 650; font-size: 14px; }
+    .file-meta { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+    button, .download {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 44px; padding: 11px 17px; border: 0; border-radius: 12px;
+      color: #fff; background: linear-gradient(110deg, #7869f3, #5e83ec);
+      font: inherit; font-size: 13px; font-weight: 750; text-decoration: none; cursor: pointer;
+      transition: filter .15s ease, transform .15s ease;
+    }
+    button:hover, .download:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    button:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+    .secondary { background: #27324c; border: 1px solid var(--line); }
+    .convert-btn { width: 100%; margin-top: 14px; }
+    .hidden { display: none !important; }
+    .progress-area { margin-top: 17px; }
+    .status { min-height: 20px; margin: 0 0 9px; color: #c6d0e5; font-size: 12px; line-height: 1.45; }
+    .progress-track { height: 8px; overflow: hidden; border-radius: 99px; background: #28334c; }
+    .progress-bar { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .2s ease; }
+    .result { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 13px; border: 1px solid rgba(88,214,199,.28); border-radius: 13px; background: rgba(88,214,199,.07); }
+    .result strong { display: block; font-size: 13px; }
+    .result span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .download { min-height: 39px; padding: 9px 13px; background: #167e76; }
+    .privacy { display: flex; align-items: flex-start; gap: 9px; margin: 16px 2px 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .privacy b { color: #d5e9e7; }
+    .foot { margin-top: 18px; color: #75819c; text-align: center; font-size: 11px; }
+    .error { color: var(--danger) !important; }
+    input[type="file"] { display: none; }
+    @media (max-width: 480px) {
+      body { padding: 18px 12px 30px; }
+      .choices { gap: 8px; }
+      .choice { padding: 14px 9px; border-radius: 14px; }
+      .choice small { font-size: 10px; }
+      .panel { padding: 16px; }
+      .result { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="brand"><span class="brand-mark">◆</span> CONVERTE</div>
+      <h1>Seu arquivo, outro formato.</h1>
+      <p class="subtitle">Escolha o que você quer converter, selecione o arquivo e pronto. Sem cadastro e sem mandar seus arquivos para um servidor.</p>
+    </header>
+
+    <p class="section-label">1. Escolha a conversão</p>
+    <section class="choices" aria-label="Opções de conversão">
+      <button class="choice" data-mode="mp4-mp3" aria-pressed="true">
+        <span class="formats"><span class="format">MP4</span><span class="arrow">→</span><span class="format">MP3</span></span>
+        <small>Vídeo para áudio</small>
+      </button>
+      <button class="choice" data-mode="mp3-ogg" aria-pressed="false">
+        <span class="formats"><span class="format">MP3</span><span class="arrow">→</span><span class="format">OGG</span></span>
+        <small>Áudio para áudio</small>
+      </button>
+      <button class="choice" data-mode="ogg-mp3" aria-pressed="false">
+        <span class="formats"><span class="format">OGG</span><span class="arrow">→</span><span class="format">MP3</span></span>
+        <small>Áudio para áudio</small>
+      </button>
+    </section>
+
+    <section class="panel" aria-live="polite">
+      <h2 id="panelTitle">MP4 para MP3</h2>
+      <p class="panel-intro" id="panelIntro">Extraia o áudio de um vídeo MP4 e salve em MP3.</p>
+      <div class="dropzone">
+        <span class="file-icon">📁</span>
+        <p class="file-name" id="fileName">Nenhum arquivo selecionado</p>
+        <p class="file-meta" id="fileMeta">Formatos aceitos: .mp4</p>
+        <button type="button" class="secondary" id="chooseBtn">Selecionar arquivo</button>
+        <input id="fileInput" type="file" accept=".mp4,video/mp4">
+      </div>
+      <button type="button" class="convert-btn" id="convertBtn" disabled>Converter arquivo</button>
+
+      <div class="progress-area hidden" id="progressArea">
+        <p class="status" id="status">Preparando...</p>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+      </div>
+
+      <div class="result hidden" id="resultBox">
+        <div><strong>Conversão concluída! ✨</strong><span id="resultMeta">Seu arquivo está pronto.</span></div>
+        <a class="download" id="downloadLink" href="#" download>↓ Baixar arquivo</a>
+      </div>
+    </section>
+
+    <p class="privacy"><span>🔒</span><span><b>Privacidade:</b> a conversão acontece no próprio navegador. A biblioteca de conversão é baixada da internet na primeira utilização, mas o arquivo escolhido não é enviado para nenhum site.</span></p>
+    <p class="foot">Dica: arquivos muito grandes podem exigir bastante memória do celular.</p>
+  </main>
+
+  <script type="module">
+    const MODES = {
+      "mp4-mp3": { from: "MP4", to: "MP3", ext: "mp4", accept: ".mp4,video/mp4", mime: "audio/mpeg", title: "MP4 para MP3", intro: "Extraia o áudio de um vídeo MP4 e salve em MP3.", args: (input, output) => ["-i", input, "-vn", "-map", "0:a:0", "-c:a", "libmp3lame", "-q:a", "2", "-map_metadata", "0", output] },
+      "mp3-ogg": { from: "MP3", to: "OGG", ext: "mp3", accept: ".mp3,audio/mpeg", mime: "audio/ogg", title: "MP3 para OGG", intro: "Converta seu áudio MP3 para OGG Vorbis.", args: (input, output) => ["-i", input, "-vn", "-c:a", "libvorbis", "-q:a", "5", "-map_metadata", "0", output] },
+      "ogg-mp3": { from: "OGG", to: "MP3", ext: "ogg", accept: ".ogg,.oga,audio/ogg,audio/opus", mime: "audio/mpeg", title: "OGG para MP3", intro: "Converta seu áudio OGG para MP3.", args: (input, output) => ["-i", input, "-vn", "-c:a", "libmp3lame", "-q:a", "2", "-map_metadata", "0", output] }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    let selectedMode = "mp4-mp3";
+    let selectedFile = null;
+    let ffmpeg = null;
+    let outputURL = null;
+    let converting = false;
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function resetResult() {
+      $("resultBox").classList.add("hidden");
+      if (outputURL) URL.revokeObjectURL(outputURL);
+      outputURL = null;
+    }
+
+    function selectMode(mode) {
+      if (converting) return;
+      selectedMode = mode;
+      selectedFile = null;
+      const config = MODES[mode];
+      document.querySelectorAll(".choice").forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+      });
+      $("panelTitle").textContent = config.title;
+      $("panelIntro").textContent = config.intro;
+      $("fileMeta").textContent = `Formatos aceitos: .${config.ext}${mode === "ogg-mp3" ? " (inclui .oga)" : ""}`;
+      $("fileName").textContent = "Nenhum arquivo selecionado";
+      $("fileInput").accept = config.accept;
+      $("fileInput").value = "";
+      $("convertBtn").disabled = true;
+      $("progressArea").classList.add("hidden");
+      resetResult();
+    }
+
+    document.querySelectorAll(".choice").forEach(button => {
+      button.addEventListener("click", () => selectMode(button.dataset.mode));
+    });
+
+    $("chooseBtn").addEventListener("click", () => $("fileInput").click());
+    $("fileInput").addEventListener("change", (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const config = MODES[selectedMode];
+      const extension = file.name.split(".").pop()?.toLowerCase();
+      const allowed = selectedMode === "ogg-mp3" ? ["ogg", "oga"] : [config.ext];
+      if (!allowed.includes(extension)) {
+        selectedFile = null;
+        $("convertBtn").disabled = true;
+        $("fileName").textContent = "Formato de arquivo incorreto";
+        $("fileMeta").textContent = `Escolha um arquivo .${config.ext}`;
+        return;
+      }
+      selectedFile = file;
+      $("fileName").textContent = file.name;
+      $("fileMeta").textContent = formatSize(file.size);
+      $("convertBtn").disabled = false;
+      $("progressArea").classList.add("hidden");
+      resetResult();
+    });
+
+    async function loadFFmpeg() {
+      if (ffmpeg?.loaded) return;
+      $("status").textContent = "Carregando o motor de conversão (primeira vez pode demorar um pouco)...";
+      const { FFmpeg } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
+      ffmpeg = new FFmpeg();
+      ffmpeg.on("progress", ({ progress }) => {
+        const percent = Math.max(0, Math.min(99, Math.round(progress * 100)));
+        $("progressBar").style.width = `${percent}%`;
+        $("status").textContent = `Convertendo... ${percent}%`;
+      });
+      const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
+      const workerBridge = URL.createObjectURL(new Blob([
+        'import "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js";'
+      ], { type: "text/javascript" }));
+      try {
+        const [coreURL, wasmURL] = await Promise.all([
+          toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
+          toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm")
+        ]);
+        await ffmpeg.load({ coreURL, wasmURL, classWorkerURL: workerBridge });
+      } catch (error) {
+        URL.revokeObjectURL(workerBridge);
+        throw error;
+      }
+    }
+
+    async function toBlobURL(url, mimeType) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Não foi possível carregar ${url} (${response.status}).`);
+      return URL.createObjectURL(new Blob([await response.arrayBuffer()], { type: mimeType }));
+    }
+
+    $("convertBtn").addEventListener("click", async () => {
+      if (!selectedFile || converting) return;
+      converting = true;
+      $("convertBtn").disabled = true;
+      $("chooseBtn").disabled = true;
+      $("progressArea").classList.remove("hidden");
+      $("progressBar").style.width = "3%";
+      $("status").classList.remove("error");
+      $("status").textContent = "Iniciando conversão...";
+      resetResult();
+
+      const config = MODES[selectedMode];
+      const inputName = `entrada.${config.ext}`;
+      const outputName = `convertido.${config.to.toLowerCase()}`;
+
+      try {
+        await loadFFmpeg();
+        $("status").textContent = "Lendo arquivo e preparando conversão...";
+        const bytes = new Uint8Array(await selectedFile.arrayBuffer());
+        try { await ffmpeg.deleteFile(inputName); } catch (_) {}
+        try { await ffmpeg.deleteFile(outputName); } catch (_) {}
+        await ffmpeg.writeFile(inputName, bytes);
+        $("status").textContent = "Convertendo...";
+        const exitCode = await ffmpeg.exec(config.args(inputName, outputName));
+        if (exitCode !== 0) throw new Error("O FFmpeg não conseguiu concluir a conversão.");
+        const data = await ffmpeg.readFile(outputName);
+        const blob = new Blob([data], { type: config.mime });
+        outputURL = URL.createObjectURL(blob);
+        const originalBase = selectedFile.name.replace(/\.[^.]+$/, "") || "arquivo";
+        const downloadName = `${originalBase}.${config.to.toLowerCase()}`;
+        $("downloadLink").href = outputURL;
+        $("downloadLink").download = downloadName;
+        $("resultMeta").textContent = `${downloadName} · ${formatSize(blob.size)}`;
+        $("resultBox").classList.remove("hidden");
+        $("progressBar").style.width = "100%";
+        $("status").textContent = "Tudo pronto. Seu arquivo foi convertido!";
+        try { await ffmpeg.deleteFile(inputName); } catch (_) {}
+        try { await ffmpeg.deleteFile(outputName); } catch (_) {}
+      } catch (error) {
+        console.error(error);
+        $("status").classList.add("error");
+        $("status").textContent = "Não foi possível converter. Confira o arquivo e tente novamente. Em MP4, verifique se há uma faixa de áudio.";
+        $("progressBar").style.width = "0%";
+      } finally {
+        converting = false;
+        $("convertBtn").disabled = !selectedFile;
+        $("chooseBtn").disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
